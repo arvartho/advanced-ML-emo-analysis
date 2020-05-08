@@ -1,25 +1,4 @@
 ```python
-import numpy as np
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-from datetime import datetime
-
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from textblob import TextBlob
-
-from datetime import datetime
-from sklearn import metrics
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
-from sklearn import preprocessing
-
-from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
-from collections import Counter
-```
-
-
-```python
 from TweetProcessor import TweetProcessor as tp
 tweet_processor = tp.TweetProcessor()
 start_all = datetime.now()
