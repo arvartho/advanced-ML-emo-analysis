@@ -1,18 +1,4 @@
 
-```python
-emo_train_df = pd.read_csv('data/2018-E-c-En-train.txt', sep='\t')
-emo_test_df = pd.read_csv('data/2018-E-c-En-test-gold.txt', sep='\t')
-print(emo_train_df.shape)
-emo_train_df.head()
-```
-
-    (6838, 13)
-
-
-
-
-
-<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
