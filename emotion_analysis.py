@@ -164,6 +164,14 @@ def draw_wordcloud(corpus):
    plt.axis("off")
    plt.show()
 
+def addValuesToResults(result):
+   
+   accuracy_res.append(result['accuracy'])
+   precision_res.append(result['precision'])
+   recall_res.append(result['recall'])
+   f1_res.append(result['f1_score'])
+   hamming_res.append(result['hamming_loss'])
+
 emo_train_df = pd.read_csv('data/2018-E-c-En-train.txt', sep='\t')
 emo_test_df = pd.read_csv('data/2018-E-c-En-test-gold.txt', sep='\t')
 print(emo_train_df.shape)
@@ -216,21 +224,39 @@ x_train_id, x_test_id, y_train, y_test = train_test_split(range(X_combined.shape
 x_train, x_test = X_combined[x_train_id], X_combined[x_test_id]
 x_train.shape, y_train.shape, x_test.shape
 
-"""## Classification
-
-One-vs-rest classification
-"""
-
 from MultiLabel.MultiLabel import Multilabel
-from sklearn.multiclass import OneVsRestClassifier,OneVsOneClassifier
-from sklearn.model_selection import GridSearchCV
-from sklearn.naive_bayes import MultinomialNB, BernoulliNB
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-from sklearn import metrics
-from sklearn.pipeline import Pipeline, make_pipeline
 
-print(x_train.shape)
-print(y_train.shape)
 Multilabel = Multilabel(x_train, y_train, x_test, y_test)
-Multilabel.oneVsRest()
-Multilabel.MLkNN()
+
+accuracy_res = []
+precision_res = []
+recall_res = []
+f1_res = []
+hamming_res = []
+labels = []
+
+results = Multilabel.oneVsRest()
+addValuesToResults(results)
+labels.append("oneVsRest")
+
+#results = Multilabel.MLkNN()
+#addValuesToResults(results)
+#labels.append("MLkNN")
+#
+results = Multilabel.LabelPowerset()
+addValuesToResults(results)
+labels.append("LabelPowerset")
+#
+#results = Multilabel.ClassifierChain()
+#addValuesToResults(results)
+#labels.append("ClassifierChain")
+#
+#results = Multilabel.BinaryRelevance()
+#addValuesToResults(results)
+#labels.append("BinaryRelevance")
+
+results = Multilabel.MajorityVotingClassifier()
+addValuesToResults(results)
+labels.append("MajVotClf")
+
+Multilabel.plotScores(accuracy_res, precision_res, recall_res, f1_res, hamming_res, labels)
