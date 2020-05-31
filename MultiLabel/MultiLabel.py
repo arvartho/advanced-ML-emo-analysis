@@ -14,6 +14,7 @@ from skmultilearn.problem_transform import LabelPowerset, ClassifierChain, Binar
 from sklearn.svm import SVC
 from skmultilearn.ensemble import MajorityVotingClassifier
 from skmultilearn.cluster import FixedLabelSpaceClusterer
+from sklearn.linear_model import Perceptron
 from sklearn.naive_bayes import GaussianNB
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -109,12 +110,14 @@ class Multilabel:
                      ('clf', OneVsRestClassifier(BernoulliNB(class_prior=None)))
                   ])
       
-      parameters = [{
-                  'clf__estimator__alpha': (0.5, 0.7, 1),
-                  }]
+      parameters = [
+         {
+            'clf__estimator__alpha': (0.5, 0.7, 1),
+         },
+      ]
       
-      grid_search_cv = GridSearchCV(pipeline, 
-                                    parameters, 
+      grid_search_cv = GridSearchCV(pipeline,
+                                    parameters,
                                     cv=2,
                                     verbose=2,
                                     n_jobs=-1)
@@ -135,15 +138,17 @@ class Multilabel:
       start = datetime.now()
       
       pipeline = Pipeline([
-                     ('clf', OneVsOneClassifier(BernoulliNB(class_prior=None)))
+                     ('clf', OneVsRestClassifier(BernoulliNB(class_prior=None)))
                   ])
       
-      parameters = [{
-                  'clf__estimator__alpha': (0.5, 0.7, 1),
-                  }]
+      parameters = [
+         {
+            'clf__estimator__alpha': (0.5, 0.7, 1),
+         }
+      ]
       
-      grid_search_cv = GridSearchCV(pipeline, 
-                                    parameters, 
+      grid_search_cv = GridSearchCV(pipeline,
+                                    parameters,
                                     cv=2,
                                     verbose=2,
                                     n_jobs=-1)
@@ -185,15 +190,22 @@ class Multilabel:
       start = datetime.now()
       
       parameters = [
-      {
-         'classifier': [MultinomialNB()],
-         'classifier__alpha': [0.7, 1.0],
-      },
-      {
-         'classifier': [RandomForestClassifier()],
-         'classifier__criterion': ['gini', 'entropy'],
-         'classifier__n_estimators': [10, 20, 50],
-      }
+         {
+            'classifier': [BernoulliNB()],
+            'classifier__alpha': [0.7, 1.0],
+         },
+         {
+            'classifier': [SVC()],
+            'classifier__kernel': ['rbf', 'linear'],
+            'classifier__C': [1, 0.8],
+            'classifier__class_weight': ['dict', 'balanced'],
+         },
+         {
+            'classifier': [Perceptron()],
+            'classifier__penalty': ['l2', 'l1'],
+            'classifier__alpha': [0.7, 1.0],
+            'classifier__max_iter': [1000, 10000],
+         },
       ]
       
       grid_search_cv = GridSearchCV(LabelPowerset(), parameters, scoring='f1_macro',
@@ -217,12 +229,20 @@ class Multilabel:
       
       parameters = [
          {
-            'classifier': [MultinomialNB()],
+            'classifier': [BernoulliNB()],
             'classifier__alpha': [0.7, 1.0],
          },
          {
             'classifier': [SVC()],
             'classifier__kernel': ['rbf', 'linear'],
+            'classifier__C': [1, 0.8],
+            'classifier__class_weight': ['dict', 'balanced'],
+         },
+         {
+            'classifier': [Perceptron()],
+            'classifier__penalty': ['l2', 'l1'],
+            'classifier__alpha': [0.7, 1.0],
+            'classifier__max_iter': [1000, 10000],
          },
       ]
       
@@ -247,12 +267,20 @@ class Multilabel:
       
       parameters = [
          {
-            'classifier': [MultinomialNB()],
+            'classifier': [BernoulliNB()],
             'classifier__alpha': [0.7, 1.0],
          },
          {
             'classifier': [SVC()],
             'classifier__kernel': ['rbf', 'linear'],
+            'classifier__C': [1, 0.8],
+            'classifier__class_weight': ['dict', 'balanced'],
+         },
+         {
+            'classifier': [Perceptron()],
+            'classifier__penalty': ['l2', 'l1'],
+            'classifier__alpha': [0.7, 1.0],
+            'classifier__max_iter': [1000, 10000],
          },
       ]
       
