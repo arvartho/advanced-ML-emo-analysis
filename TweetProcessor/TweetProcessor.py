@@ -77,6 +77,7 @@ class TweetProcessor():
       doc = re.sub(r' doesnt ', r' does not ', doc).strip()
       doc = re.sub(r' didnt ', r' did not ', doc).strip()
       doc = re.sub(r' wont ', r' will not ', doc).strip()
+      doc = re.sub(r' won\'t ', r' will not ', doc).strip()
       doc = re.sub(r' havent ', r' have not ', doc).strip()
       doc = re.sub(r' hasnt ', r' has not ', doc).strip()
       doc = re.sub(r' hadnt ', r' had not ', doc).strip()
