@@ -207,7 +207,7 @@ class TweetProcessor():
                                 min_df=5, 
                                 ngram_range=(1, 3),
                                 norm='l2', 
-                                max_features=5000)
+                                max_features=2000)
       vectorizer.fit(doc)
       return vectorizer
    
