@@ -18,13 +18,15 @@ from sklearn.linear_model import Perceptron
 from sklearn.naive_bayes import GaussianNB
 import matplotlib.pyplot as plt
 import seaborn as sns
+from helper_functions import plot_roc, ideal_partitioning
 
 class Multilabel:
-   def __init__(self, x_train, y_train, x_test, y_test):
+   def __init__(self, x_train, y_train, x_test, y_test, labels):
       self.x_train = x_train
       self.y_train = y_train
       self.x_test = x_test
       self.y_test = y_test
+      self.labels = labels
    
    def plotScores(self,accuracy_res, precision_res, recall_res, f1_res, hamming_res, labels):
       fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, sharey=True, figsize=(16, 5))
@@ -45,19 +47,19 @@ class Multilabel:
       ax5.set_ylabel('Hamming Loss')
       
       # # Add the xlabels to the chart
-      ax1.set_xticklabels(xlabels)
-      ax2.set_xticklabels(xlabels)
-      ax3.set_xticklabels(xlabels)
-      ax4.set_xticklabels(xlabels)
-      ax5.set_xticklabels(xlabels)
+      ax1.set_xticklabels(xlabels, rotation=70)
+      ax2.set_xticklabels(xlabels, rotation=70)
+      ax3.set_xticklabels(xlabels, rotation=70)
+      ax4.set_xticklabels(xlabels, rotation=70)
+      ax5.set_xticklabels(xlabels, rotation=70)
       
       # Add the actual value on top of each bar
       for i, v in enumerate(zip(accuracy_res, precision_res, recall_res,f1_res,hamming_res)):
          ax1.text(i - 0.1, v[0] + 0.01, str(round(v[0], 2)))
          ax2.text(i - 0.1, v[1] + 0.01, str(round(v[1], 2)))
          ax3.text(i - 0.1, v[2] + 0.01, str(round(v[2], 2)))
-         ax4.text(i - 0.1, v[2] + 0.01, str(round(v[2], 2)))
-         ax5.text(i - 0.1, v[2] + 0.01, str(round(v[2], 2)))
+         ax4.text(i - 0.1, v[3] + 0.01, str(round(v[3], 2)))
+         ax5.text(i - 0.1, v[4] + 0.01, str(round(v[4], 2)))
       
       # Show the final plot
       plt.show()
@@ -69,6 +71,8 @@ class Multilabel:
       '''
       
       multilabel_cm = multilabel_confusion_matrix(y_pred, y_test)
+      if type(y_pred) != np.ndarray:
+         y_pred = y_pred.toarray()
       if measurement=='macro':
          tn = np.mean(multilabel_cm[:, 0, 0])
          tp = np.mean(multilabel_cm[:, 1, 1])
@@ -94,6 +98,7 @@ class Multilabel:
          recall = np.around(np.mean(r), 3)   
          f1_score = np.around(2* recall*precision/(recall + precision), 3)
       hamming = np.around(hamming_loss(y_test, y_pred), 3)
+      print(ideal_partitioning(y_pred, self.labels))
       return {'accuracy':accuracy,
             'precision':precision,
             'recall':recall,
@@ -122,14 +127,12 @@ class Multilabel:
                                     verbose=2,
                                     n_jobs=-1)
       grid_search_cv.fit(self.x_train, self.y_train)
-      best_clf = grid_search_cv.best_estimator_
+      clf = grid_search_cv.best_estimator_
       
       print('Finished training in : ', datetime.now()-start) 
       
-      y_pred = best_clf.predict(self.x_test)
-      start = datetime.now()
+      y_pred = clf.predict(self.x_test)
       return self.multilabel_evaluation(y_pred, self.y_test)
-      print('Finished classification in : ', datetime.now()-start)
 
    def oneVsone(self):
       print("")
@@ -153,14 +156,12 @@ class Multilabel:
                                     verbose=2,
                                     n_jobs=-1)
       grid_search_cv.fit(self.x_train, self.y_train)
-      best_clf = grid_search_cv.best_estimator_
+      clf = grid_search_cv.best_estimator_
       
       print('Finished training in : ', datetime.now()-start) 
       
-      y_pred = best_clf.predict(self.x_test)
-      start = datetime.now()
+      y_pred = clf.predict(self.x_test)
       return self.multilabel_evaluation(y_pred, self.y_test)
-      print('Finished classification in : ', datetime.now()-start)
    
    def MLkNN(self):
       print("")
@@ -174,14 +175,10 @@ class Multilabel:
                                     verbose=2,
                                     n_jobs=-1)
       grid_search_cv.fit(self.x_train, self.y_train)
-      best_clf = grid_search_cv.best_estimator_
+      clf = grid_search_cv.best_estimator_
       
-      print('Finished training in : ', datetime.now()-start) 
-      
-      y_pred = best_clf.predict(self.x_test)
-      start = datetime.now()
+      y_pred = clf.predict(self.x_test)
       return self.multilabel_evaluation(y_pred, self.y_test)
-      print('Finished classification in : ', datetime.now()-start)
    
    def LabelPowerset(self):
       print("")
@@ -194,32 +191,30 @@ class Multilabel:
             'classifier': [BernoulliNB()],
             'classifier__alpha': [0.7, 1.0],
          },
-         {
-            'classifier': [SVC()],
-            'classifier__kernel': ['rbf', 'linear'],
-            'classifier__C': [1, 0.8],
-            'classifier__class_weight': ['dict', 'balanced'],
-         },
-         {
-            'classifier': [Perceptron()],
-            'classifier__penalty': ['l2', 'l1'],
-            'classifier__alpha': [0.7, 1.0],
-            'classifier__max_iter': [1000, 10000],
-         },
+         # {
+         #    'classifier': [SVC()],
+         #    'classifier__kernel': ['rbf', 'linear'],
+         #    'classifier__C': [1, 0.8],
+         #    'classifier__class_weight': ['dict', 'balanced'],
+         # },
+         # {
+         #    'classifier': [Perceptron()],
+         #    'classifier__penalty': ['l2', 'l1'],
+         #    'classifier__alpha': [0.7, 1.0],
+         #    'classifier__max_iter': [1000, 10000],
+         # },
       ]
       
       grid_search_cv = GridSearchCV(LabelPowerset(), parameters, scoring='f1_macro',
                                     verbose=2,
                                     n_jobs=-1)
       grid_search_cv.fit(self.x_train, self.y_train)
-      best_clf = grid_search_cv.best_estimator_
+      clf = grid_search_cv.best_estimator_
       
       print('Finished training in : ', datetime.now()-start) 
       
-      y_pred = best_clf.predict(self.x_test)
-      start = datetime.now()
+      y_pred = clf.predict(self.x_test)
       return self.multilabel_evaluation(y_pred, self.y_test)
-      print('Finished classification in : ', datetime.now()-start)
    
    def ClassifierChain(self):
       print("")
@@ -232,32 +227,30 @@ class Multilabel:
             'classifier': [BernoulliNB()],
             'classifier__alpha': [0.7, 1.0],
          },
-         {
-            'classifier': [SVC()],
-            'classifier__kernel': ['rbf', 'linear'],
-            'classifier__C': [1, 0.8],
-            'classifier__class_weight': ['dict', 'balanced'],
-         },
-         {
-            'classifier': [Perceptron()],
-            'classifier__penalty': ['l2', 'l1'],
-            'classifier__alpha': [0.7, 1.0],
-            'classifier__max_iter': [1000, 10000],
-         },
+         # {
+         #    'classifier': [SVC()],
+         #    'classifier__kernel': ['rbf', 'linear'],
+         #    'classifier__C': [1, 0.8],
+         #    'classifier__class_weight': ['dict', 'balanced'],
+         # },
+         # {
+         #    'classifier': [Perceptron()],
+         #    'classifier__penalty': ['l2', 'l1'],
+         #    'classifier__alpha': [0.7, 1.0],
+         #    'classifier__max_iter': [1000, 10000],
+         # },
       ]
       
       grid_search_cv = GridSearchCV(ClassifierChain(), parameters, scoring='f1_macro',
                                     verbose=2,
                                     n_jobs=-1)
       grid_search_cv.fit(self.x_train, self.y_train)
-      best_clf = grid_search_cv.best_estimator_
+      clf = grid_search_cv.best_estimator_
       
       print('Finished training in : ', datetime.now()-start) 
       
-      y_pred = best_clf.predict(self.x_test)
-      start = datetime.now()
+      y_pred = clf.predict(self.x_test)
       return self.multilabel_evaluation(y_pred, self.y_test)
-      print('Finished classification in : ', datetime.now()-start)
 
    def BinaryRelevance(self):
       print("")
@@ -270,32 +263,30 @@ class Multilabel:
             'classifier': [BernoulliNB()],
             'classifier__alpha': [0.7, 1.0],
          },
-         {
-            'classifier': [SVC()],
-            'classifier__kernel': ['rbf', 'linear'],
-            'classifier__C': [1, 0.8],
-            'classifier__class_weight': ['dict', 'balanced'],
-         },
-         {
-            'classifier': [Perceptron()],
-            'classifier__penalty': ['l2', 'l1'],
-            'classifier__alpha': [0.7, 1.0],
-            'classifier__max_iter': [1000, 10000],
-         },
+         # {
+         #    'classifier': [SVC()],
+         #    'classifier__kernel': ['rbf', 'linear'],
+         #    'classifier__C': [1, 0.8],
+         #    'classifier__class_weight': ['dict', 'balanced'],
+         # },
+         # {
+         #    'classifier': [Perceptron()],
+         #    'classifier__penalty': ['l2', 'l1'],
+         #    'classifier__alpha': [0.7, 1.0],
+         #    'classifier__max_iter': [1000, 10000],
+         # },
       ]
       
       grid_search_cv = GridSearchCV(BinaryRelevance(), parameters, scoring='f1_macro',
                                     verbose=2,
                                     n_jobs=-1)
       grid_search_cv.fit(self.x_train, self.y_train)
-      best_clf = grid_search_cv.best_estimator_
+      clf = grid_search_cv.best_estimator_
       
       print('Finished training in : ', datetime.now()-start) 
       
-      y_pred = best_clf.predict(self.x_test)
-      start = datetime.now()
+      y_pred = clf.predict(self.x_test)
       return self.multilabel_evaluation(y_pred, self.y_test)
-      print('Finished classification in : ', datetime.now()-start)
 
    def MajorityVotingClassifier(self):
       print("")
@@ -303,15 +294,13 @@ class Multilabel:
       print("")
       start = datetime.now()
       
-      classifier = MajorityVotingClassifier(
+      clf = MajorityVotingClassifier(
          clusterer = FixedLabelSpaceClusterer(clusters = [[1,2,3], [0, 2, 5], [4, 5]]),
          classifier = ClassifierChain(classifier=GaussianNB())
       )
       
       print('Finished training in : ', datetime.now()-start) 
       
-      classifier.fit(self.x_train, self.y_train)
-      y_pred = classifier.predict(self.x_test)
-      start = datetime.now()
+      clf .fit(self.x_train, self.y_train)
+      y_pred = clf .predict(self.x_test)
       return self.multilabel_evaluation(y_pred, self.y_test)
-      print('Finished classification in : ', datetime.now()-start)

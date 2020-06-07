@@ -58,9 +58,11 @@ def vizualize_classification(y_test, y_pred):
 def plot_roc(y_test, proba, labels):
    from sklearn.metrics import roc_curve, auc
    colors = sns.color_palette("muted", n_colors=11)
+   auc_list = []
    for i,label in enumerate(labels):
       fpr, tpr,_ = roc_curve(y_test[:, i], proba[:, i])
       roc_auc = auc(fpr, tpr)   
+      auc_list.append(roc_auc)
       plt.plot(fpr, tpr, color=colors[i],
                lw=2, label='%s ROC curve (area = %0.2f)' % (label, roc_auc))
    plt.legend(loc="lower right", bbox_to_anchor=(1.7,0))
@@ -71,6 +73,7 @@ def plot_roc(y_test, proba, labels):
    plt.ylabel('True Positive Rate')
    plt.title('%s ' % label)
    plt.show()
+   return np.mean(auc_list)
 
 def multilabel_evaluation(y_pred, y_test, measurement=None):
    '''
@@ -193,6 +196,63 @@ def irlbl(df, label):
    majority_class = df[feelings].sum().max()
    irlbl = (majority_class/df[feelings].sum())[label]
    return np.round(irlbl, 3)
+
+def plotScores(accuracy_res, precision_res, recall_res, f1_res, hamming_res, mean_irlbl, labels):
+      fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(1, 5, sharey=True, figsize=(16, 5))
+      fig2, ax = plt.subplots( sharey=True, figsize=(5, 5))
+      x = np.arange(len(accuracy_res))
+      
+      xlabels = list(labels)
+      sns.barplot(x, accuracy_res, palette='RdBu_r', ax=ax1)
+      sns.barplot(x, precision_res, palette='RdBu_r', ax=ax2)
+      sns.barplot(x, recall_res, palette='RdBu_r', ax=ax3)
+      sns.barplot(x, f1_res, palette='RdBu_r', ax=ax4)
+      sns.barplot(x, hamming_res, palette='RdBu_r', ax=ax5)
+      sns.barplot(x, mean_irlbl, palette='RdBu_r', ax=ax)
+      
+      ax1.set_ylabel('Accuracy')
+      ax2.set_ylabel('precision')
+      ax3.set_ylabel('Recall')
+      ax4.set_ylabel('F1-Score')
+      ax5.set_ylabel('Hamming Loss')
+      ax.set_ylabel('Mean Label Imbalance Ratio')
+      
+      # # Add the xlabels to the chart
+      ax1.set_xticklabels(xlabels, rotation=70)
+      ax2.set_xticklabels(xlabels, rotation=70)
+      ax3.set_xticklabels(xlabels, rotation=70)
+      ax4.set_xticklabels(xlabels, rotation=70)
+      ax5.set_xticklabels(xlabels, rotation=70)      
+      ax.set_xticklabels(xlabels, rotation=70)
+      # Add the actual value on top of each bar
+      for i, v in enumerate(zip(accuracy_res, precision_res, recall_res,f1_res,hamming_res, mean_irlbl)):
+         ax1.text(i - 0.1, v[0] + 0.01, str(round(v[0], 2)))
+         ax2.text(i - 0.1, v[1] + 0.01, str(round(v[1], 2)))
+         ax3.text(i - 0.1, v[2] + 0.01, str(round(v[2], 2)))
+         ax4.text(i - 0.1, v[3] + 0.01, str(round(v[3], 2)))
+         ax5.text(i - 0.1, v[4] + 0.01, str(round(v[4], 2)))
+         ax.text(i - 0.1, v[5] + 0.01, str(round(v[5], 2)))
+      # Show the final plot
+      plt.show()
+
+def ideal_partitioning(df, labels):
+   from sklearn.cluster import KMeans
+   from sklearn.metrics import silhouette_score
+   if type(df) != pd.DataFrame:
+      df = pd.DataFrame(data=df, columns=labels)
+   silhouette = []
+   clusterings = []
+   X = df[labels].corr().values
+   if not np.isnan(X.sum()):
+      for i in range(2, len(labels)-1):      
+         kmeans = KMeans(n_clusters=i, random_state=0).fit(X)
+         # create clustering dictionay: cluster:correlated emotions
+         clustering = {i:labels[kmeans.labels_==i] for i in set(kmeans.labels_)}
+         clusterings.append(clustering)
+         x_clustering = kmeans.transform(X)
+         # capture silhouette metric
+         silhouette.append(silhouette_score(x_clustering, kmeans.labels_))      
+      return (np.argmax(silhouette)+2, clusterings[np.argmax(silhouette)])
 
 
 
